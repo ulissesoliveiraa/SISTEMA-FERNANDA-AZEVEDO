@@ -1,0 +1,9 @@
+package com.fernandaazevedo.common;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.web.servlet.config.annotation.*;
+@Configuration public class WebConfig implements WebMvcConfigurer {
+ @Bean TomcatServletWebServerFactory tomcatFactory(){var factory=new TomcatServletWebServerFactory();factory.setProtocol("org.apache.coyote.http11.Http11Nio2Protocol");return factory;}
+ public void addViewControllers(ViewControllerRegistry r){String[] paths={"login","cadastro","esqueci-senha","redefinir-senha","termos","privacidade","paciente/dashboard","paciente/consultar","paciente/pagamento","paciente/pre-anamnese","paciente/teste-dispositivos","paciente/fila","paciente/historico","paciente/documentos","paciente/suporte","paciente/perfil","paciente/privacidade","medico/dashboard","medico/fila","medico/agenda","medico/historico","medico/financeiro","medico/suporte","medico/perfil","medico/privacidade","suporte/dashboard","suporte/tickets","suporte/usuarios","suporte/perfil","admin/dashboard","admin/usuarios","admin/permissoes","admin/consultas","admin/pagamentos","admin/tickets","admin/campanhas","admin/configuracoes","admin/configuracoes/valores","admin/consentimentos","admin/auditoria","admin/perfil"};for(String p:paths)r.addViewController("/"+p).setViewName("forward:/app.html");r.addViewController("/paciente/consulta/{id}").setViewName("forward:/app.html");r.addViewController("/medico/consulta/{id}").setViewName("forward:/app.html");r.addViewController("/paciente/historico/{id}").setViewName("forward:/app.html");r.addViewController("/medico/historico/{id}").setViewName("forward:/app.html");r.addViewController("/suporte/tickets/{id}").setViewName("forward:/app.html");}
+}

@@ -20,6 +20,12 @@ Nesta máquina, o Java 21 e o Maven portáteis estão em `.runtime`. Após reini
 
 O servidor é vinculado exclusivamente a `127.0.0.1`, portanto não é publicado na rede local nem na internet.
 
+## Publicar no Render
+
+O repositório inclui `Dockerfile` e `render.yaml`. No Render, crie um **Blueprint**, conecte este repositório e confirme o serviço gratuito. O Render define a porta e publica a aplicação com HTTPS automaticamente.
+
+No plano gratuito, o sistema entra em repouso após um período sem acessos e o armazenamento local é efêmero. Portanto, o H2 e os uploads podem voltar aos dados demonstrativos após reinicializações. Use esta implantação somente para demonstração; produção requer banco e armazenamento persistentes.
+
 ## Contas demo
 
 Todas usam `Demo@123` (armazenada apenas como hash BCrypt).

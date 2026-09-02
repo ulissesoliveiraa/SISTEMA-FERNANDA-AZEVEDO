@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fernanda-azevedo
+    runtime: docker
+    plan: free
+    autoDeployTrigger: commit
+    healthCheckPath: /api/public/settings
+    envVars:
+      - key: SERVER_ADDRESS
+        value: 0.0.0.0
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0

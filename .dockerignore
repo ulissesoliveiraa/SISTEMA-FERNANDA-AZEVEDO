@@ -1,0 +1,8 @@
+.git
+.github
+.runtime
+target
+data
+*.log
+src/main/resources/static/uploads-demo/*
+!src/main/resources/static/uploads-demo/.gitkeep

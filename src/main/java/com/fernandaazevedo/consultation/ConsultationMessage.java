@@ -13,6 +13,7 @@ public class ConsultationMessage {
   @Column(nullable = false) public String senderRole;
   @Column(nullable = false) public String messageType = "TEXT";
   @Column(nullable = false, length = 4000) public String content;
+  public String attachmentId;
   @Column(nullable = false) public String deliveryStatus = "SENT";
   @Column(nullable = false) public LocalDateTime createdAt = LocalDateTime.now();
   public LocalDateTime deliveredAt;

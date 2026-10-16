@@ -1,5 +1,6 @@
 target/
 data/
+private-storage/
 .runtime/
 src/main/resources/static/uploads-demo/*
 !.gitkeep

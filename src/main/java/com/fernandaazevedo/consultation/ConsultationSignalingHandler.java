@@ -1,5 +1,6 @@
 package com.fernandaazevedo.consultation;
 
+import com.fernandaazevedo.attachments.AttachmentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -19,12 +20,14 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
   private static final Set<String> RELAY_TYPES = Set.of("offer", "answer", "ice-candidate", "media-state", "leave");
   private final ConsultationAccessService accessService;
   private final ConsultationMessageRepository messages;
+  private final AttachmentRepository attachments;
   private final ObjectMapper json;
   private final Map<Long, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
 
-  public ConsultationSignalingHandler(ConsultationAccessService accessService, ConsultationMessageRepository messages, ObjectMapper json) {
+  public ConsultationSignalingHandler(ConsultationAccessService accessService, ConsultationMessageRepository messages, AttachmentRepository attachments, ObjectMapper json) {
     this.accessService = accessService;
     this.messages = messages;
+    this.attachments = attachments;
     this.json = json;
   }
 
@@ -63,6 +66,7 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     JsonNode body = json.readTree(message.getPayload());
     String type = body.path("type").asText("");
     if ("chat-message".equals(type)) { persistAndBroadcastMessage(session, body); return; }
+    if ("chat-attachment".equals(type)) { persistAndBroadcastAttachment(session, body); return; }
     if ("chat-read".equals(type)) { markMessageRead(session, body); return; }
     if (!RELAY_TYPES.contains(type)) return;
     Long consultationId = (Long) session.getAttributes().get("consultationId");
@@ -75,6 +79,31 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     if (body.has("audio")) relay.put("audio", body.get("audio").asBoolean());
     if (body.has("video")) relay.put("video", body.get("video").asBoolean());
     broadcast(consultationId, relay, session);
+  }
+
+  private void persistAndBroadcastAttachment(WebSocketSession session, JsonNode body) throws IOException {
+    String attachmentId = body.path("attachmentId").asText("");
+    Long consultationId = (Long) session.getAttributes().get("consultationId");
+    Long userId = (Long) session.getAttributes().get("userId");
+    var found = attachments.findById(attachmentId);
+    if (found.isEmpty() || !found.get().consultationId.equals(consultationId) || !found.get().uploaderUserId.equals(userId) || !"CLEAN".equals(found.get().scanStatus)) {
+      send(session, Map.of("type", "chat-error", "message", "O anexo não foi aprovado para compartilhamento."));
+      return;
+    }
+    ConsultationMessage stored = new ConsultationMessage();
+    stored.consultationId = consultationId;
+    stored.senderUserId = userId;
+    stored.senderName = String.valueOf(session.getAttributes().get("userName"));
+    stored.senderRole = String.valueOf(session.getAttributes().get("participantRole"));
+    stored.messageType = "ATTACHMENT";
+    stored.content = found.get().originalName;
+    stored.attachmentId = found.get().id;
+    Map<String, WebSocketSession> room = rooms.get(consultationId);
+    if (room != null && room.size() == 2) { stored.deliveryStatus = "DELIVERED"; stored.deliveredAt = LocalDateTime.now(); }
+    stored = messages.save(stored);
+    Map<String, Object> event = new LinkedHashMap<>();
+    event.put("type", "chat-message"); event.put("id", stored.id); event.put("senderUserId", stored.senderUserId); event.put("senderName", stored.senderName); event.put("senderRole", stored.senderRole); event.put("messageType", stored.messageType); event.put("content", stored.content); event.put("attachmentId", stored.attachmentId); event.put("deliveryStatus", stored.deliveryStatus); event.put("createdAt", stored.createdAt.toString());
+    broadcast(consultationId, event, null);
   }
 
   private void persistAndBroadcastMessage(WebSocketSession session, JsonNode body) throws IOException {

@@ -43,6 +43,7 @@ Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 - Cadastro com consentimento versionado, login por perfil e recuperação neutra.
 - Checkout, pré-anamnese sem diagnóstico, MediaDevices, fila e sala WebRTC.
 - Chat clínico em tempo real por WebSocket, persistido por consulta, com entrega e leitura.
+- Anexos clínicos em armazenamento privado, download autorizado, magic bytes, hash SHA-256, quarentena e adaptador ClamAV.
 - Histórico, documentos marcados como demo, chats e upload com bloqueio de executáveis.
 - Chatbot operacional, tickets, notas internas e transcript mock.
 - Usuários, permissões, valores, campanhas, consentimentos e auditoria.
@@ -70,3 +71,16 @@ WEBRTC_TURN_CREDENTIAL=credencial-temporaria
 ```
 
 Sem TURN, a chamada pode funcionar na mesma rede ou em NATs compatíveis, mas não deve ser considerada pronta para produção. Credenciais TURN permanentes não devem ser versionadas; em produção, use credenciais temporárias emitidas por backend seguro.
+
+## Antimalware e armazenamento privado
+
+Os anexos são gravados fora da pasta pública usando nomes UUID e nunca são executados ou exibidos inline. A extensão, MIME declarado, tamanho e assinatura inicial são validados antes do armazenamento. Configure um daemon ClamAV acessível pelo protocolo `INSTREAM`:
+
+```text
+PRIVATE_STORAGE_ROOT=/caminho/privado
+CLAMAV_HOST=clamav
+CLAMAV_PORT=3310
+CLAMAV_TIMEOUT_MS=10000
+```
+
+Se o ClamAV não estiver configurado ou falhar, o arquivo recebe `QUARANTINED` e não pode ser compartilhado nem baixado. Somente `CLEAN` é disponibilizado. No Render gratuito, o sistema de arquivos é efêmero; produção precisa de object storage privado, URLs temporárias, scanner de objetos e política de retenção.

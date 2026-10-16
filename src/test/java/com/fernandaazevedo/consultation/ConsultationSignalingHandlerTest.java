@@ -1,6 +1,7 @@
 package com.fernandaazevedo.consultation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fernandaazevedo.attachments.AttachmentRepository;
 import com.fernandaazevedo.domain.AppUser;
 import com.fernandaazevedo.domain.DomainRecord;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ class ConsultationSignalingHandlerTest {
   void twoAuthorizedParticipantsReceiveReadyAndRelaySignals() throws Exception {
     ConsultationAccessService access = mock(ConsultationAccessService.class);
     ConsultationMessageRepository messageRepository = mock(ConsultationMessageRepository.class);
+    AttachmentRepository attachmentRepository = mock(AttachmentRepository.class);
     DomainRecord appointment = new DomainRecord(); appointment.id = 77L; appointment.reference = "FA-LIVE-TEST";
     AppUser patientUser = user(1L, "PATIENT");
     AppUser doctorUser = user(2L, "DOCTOR");
@@ -27,7 +29,7 @@ class ConsultationSignalingHandlerTest {
 
     Session patient = session(1L);
     Session doctor = session(2L);
-    ConsultationSignalingHandler handler = new ConsultationSignalingHandler(access, messageRepository, new ObjectMapper());
+    ConsultationSignalingHandler handler = new ConsultationSignalingHandler(access, messageRepository, attachmentRepository, new ObjectMapper());
     handler.afterConnectionEstablished(patient.socket);
     handler.afterConnectionEstablished(doctor.socket);
 
@@ -47,9 +49,10 @@ class ConsultationSignalingHandlerTest {
   void unauthenticatedSocketIsClosedWithoutJoiningRoom() throws Exception {
     ConsultationAccessService access = mock(ConsultationAccessService.class);
     ConsultationMessageRepository messageRepository = mock(ConsultationMessageRepository.class);
+    AttachmentRepository attachmentRepository = mock(AttachmentRepository.class);
     when(access.authorize(77L, null)).thenReturn(Optional.empty());
     Session anonymous = session(null);
-    ConsultationSignalingHandler handler = new ConsultationSignalingHandler(access, messageRepository, new ObjectMapper());
+    ConsultationSignalingHandler handler = new ConsultationSignalingHandler(access, messageRepository, attachmentRepository, new ObjectMapper());
     handler.afterConnectionEstablished(anonymous.socket);
     verify(anonymous.socket).close(argThat(status -> status.getCode() == 4403));
     assertTrue(anonymous.messages.isEmpty());

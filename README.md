@@ -54,4 +54,18 @@ Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 
 ## Limitações
 
-Pagamento, Google OAuth, vídeo remoto, antimalware, verificação de URLs, cloud, SMTP, assinatura e push são simulados. O preview local não é gravado. O scanner mock **não oferece proteção antimalware real** e documentos demo não têm validade médica. Produção exige revisão jurídica/LGPD/CFM, SRES, infraestrutura, CSRF/CSP, storage privado, scanner real, OAuth, observabilidade e testes de segurança.
+Pagamento, Google OAuth, antimalware, verificação de URLs, cloud, SMTP, assinatura e push são simulados. A videochamada WebRTC é real, não é gravada e ainda depende de TURN e validação entre redes distintas para uso confiável. O scanner mock **não oferece proteção antimalware real** e documentos demo não têm validade médica. Produção exige revisão jurídica/LGPD/CFM, SRES, infraestrutura, CSRF/CSP, storage privado, scanner real, OAuth, observabilidade e testes de segurança.
+
+## WebRTC e TURN
+
+A teleconsulta usa WebRTC real e sinalização WebSocket autenticada no mesmo servidor. O paciente e o médico precisam estar vinculados à mesma consulta ativa. STUN público é usado para desenvolvimento.
+
+Para conectividade confiável entre redes diferentes, configure um servidor TURN por variáveis de ambiente:
+
+```text
+WEBRTC_TURN_URL=turns:turn.exemplo.com:5349
+WEBRTC_TURN_USERNAME=usuario-temporario
+WEBRTC_TURN_CREDENTIAL=credencial-temporaria
+```
+
+Sem TURN, a chamada pode funcionar na mesma rede ou em NATs compatíveis, mas não deve ser considerada pronta para produção. Credenciais TURN permanentes não devem ser versionadas; em produção, use credenciais temporárias emitidas por backend seguro.

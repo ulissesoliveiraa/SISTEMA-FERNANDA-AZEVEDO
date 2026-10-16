@@ -48,3 +48,6 @@ html.dark .price-card{background:linear-gradient(135deg,#26372b,#19261d);border-
 html.dark .eyebrow{color:#e3ce99}html.dark a:not(.btn){text-decoration-color:#8b9d8e}html.dark .warm{background:#131f17}
 html.dark .a11y-fab{background:#f1ead9;color:#213626}html.dark .modal-backdrop{background:#071009d9}
 html.dark .auth-card{color:var(--dark-text)}html.dark .demo-users{color:var(--dark-text);border-color:#5a5135}
+
+/* WebRTC consultation */
+.remote-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#101913}.remote-video[hidden]{display:none}.video-placeholder{position:relative;z-index:1}.video-topbar,.self-video-wrap,.video-controls,.media-alert{z-index:2}

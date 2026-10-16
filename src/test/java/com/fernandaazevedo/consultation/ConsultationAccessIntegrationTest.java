@@ -35,12 +35,17 @@ class ConsultationAccessIntegrationTest {
     mvc.perform(get("/api/consultations/{id}/session", id).session(login("medico@fernandaazevedo.demo")))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.role").value("DOCTOR"));
+    mvc.perform(get("/api/consultations/{id}/messages", id).session(login("paciente@fernandaazevedo.demo")))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$", hasSize(0)));
   }
 
   @Test
   void supportAndAdminCannotEnterClinicalRoom() throws Exception {
     Long id = liveConsultationId();
     mvc.perform(get("/api/consultations/{id}/session", id).session(login("suporte@fernandaazevedo.demo")))
+      .andExpect(status().isForbidden());
+    mvc.perform(get("/api/consultations/{id}/messages", id).session(login("suporte@fernandaazevedo.demo")))
       .andExpect(status().isForbidden());
     mvc.perform(get("/api/consultations/{id}/session", id).session(login("admin@fernandaazevedo.demo")))
       .andExpect(status().isForbidden());

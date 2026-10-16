@@ -11,18 +11,27 @@ import java.util.*;
 @RequestMapping("/api/consultations")
 public class ConsultationController {
   private final ConsultationAccessService accessService;
+  private final ConsultationMessageRepository messages;
   private final String turnUrl;
   private final String turnUsername;
   private final String turnCredential;
 
-  public ConsultationController(ConsultationAccessService accessService,
+  public ConsultationController(ConsultationAccessService accessService, ConsultationMessageRepository messages,
       @Value("${webrtc.turn.url:}") String turnUrl,
       @Value("${webrtc.turn.username:}") String turnUsername,
       @Value("${webrtc.turn.credential:}") String turnCredential) {
     this.accessService = accessService;
+    this.messages = messages;
     this.turnUrl = turnUrl;
     this.turnUsername = turnUsername;
     this.turnCredential = turnCredential;
+  }
+
+  @GetMapping("/{id}/messages")
+  public ResponseEntity<?> messages(@PathVariable Long id, HttpSession session) {
+    Long userId = session.getAttribute("uid") instanceof Long uid ? uid : null;
+    if (accessService.authorize(id, userId).isEmpty()) return ResponseEntity.status(403).body(Map.of("message", "Acesso não autorizado ao histórico clínico."));
+    return ResponseEntity.ok(messages.findByConsultationIdOrderByCreatedAtAsc(id).stream().map(this::messageView).toList());
   }
 
   @GetMapping("/{id}/session")
@@ -46,5 +55,20 @@ public class ConsultationController {
       servers.add(Map.of("urls", turnUrl, "username", turnUsername, "credential", turnCredential));
     }
     return servers;
+  }
+
+  private Map<String, Object> messageView(ConsultationMessage message) {
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("id", message.id);
+    result.put("senderUserId", message.senderUserId);
+    result.put("senderName", message.senderName);
+    result.put("senderRole", message.senderRole);
+    result.put("messageType", message.messageType);
+    result.put("content", message.content);
+    result.put("deliveryStatus", message.deliveryStatus);
+    result.put("createdAt", message.createdAt);
+    result.put("deliveredAt", message.deliveredAt);
+    result.put("readAt", message.readAt);
+    return result;
   }
 }

@@ -8,7 +8,9 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,11 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConsultationSignalingHandler extends TextWebSocketHandler {
   private static final Set<String> RELAY_TYPES = Set.of("offer", "answer", "ice-candidate", "media-state", "leave");
   private final ConsultationAccessService accessService;
+  private final ConsultationMessageRepository messages;
   private final ObjectMapper json;
   private final Map<Long, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
 
-  public ConsultationSignalingHandler(ConsultationAccessService accessService, ObjectMapper json) {
+  public ConsultationSignalingHandler(ConsultationAccessService accessService, ConsultationMessageRepository messages, ObjectMapper json) {
     this.accessService = accessService;
+    this.messages = messages;
     this.json = json;
   }
 
@@ -36,6 +40,8 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     String role = access.get().participantRole();
     session.getAttributes().put("consultationId", consultationId);
     session.getAttributes().put("participantRole", role);
+    session.getAttributes().put("userId", access.get().user().id);
+    session.getAttributes().put("userName", access.get().user().name);
     Map<String, WebSocketSession> room = rooms.computeIfAbsent(consultationId, ignored -> new ConcurrentHashMap<>());
     WebSocketSession previous = room.putIfAbsent(role, session);
     if (previous != null && previous.isOpen()) {
@@ -56,6 +62,8 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     }
     JsonNode body = json.readTree(message.getPayload());
     String type = body.path("type").asText("");
+    if ("chat-message".equals(type)) { persistAndBroadcastMessage(session, body); return; }
+    if ("chat-read".equals(type)) { markMessageRead(session, body); return; }
     if (!RELAY_TYPES.contains(type)) return;
     Long consultationId = (Long) session.getAttributes().get("consultationId");
     String role = String.valueOf(session.getAttributes().get("participantRole"));
@@ -67,6 +75,51 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     if (body.has("audio")) relay.put("audio", body.get("audio").asBoolean());
     if (body.has("video")) relay.put("video", body.get("video").asBoolean());
     broadcast(consultationId, relay, session);
+  }
+
+  private void persistAndBroadcastMessage(WebSocketSession session, JsonNode body) throws IOException {
+    String content = body.path("content").asText("").strip();
+    if (content.isBlank() || content.length() > 4000) {
+      send(session, Map.of("type", "chat-error", "message", "A mensagem deve ter entre 1 e 4000 caracteres."));
+      return;
+    }
+    Long consultationId = (Long) session.getAttributes().get("consultationId");
+    Map<String, WebSocketSession> room = rooms.get(consultationId);
+    ConsultationMessage stored = new ConsultationMessage();
+    stored.consultationId = consultationId;
+    stored.senderUserId = (Long) session.getAttributes().get("userId");
+    stored.senderName = String.valueOf(session.getAttributes().get("userName"));
+    stored.senderRole = String.valueOf(session.getAttributes().get("participantRole"));
+    stored.content = content;
+    if (room != null && room.size() == 2) {
+      stored.deliveryStatus = "DELIVERED";
+      stored.deliveredAt = LocalDateTime.now();
+    }
+    stored = messages.save(stored);
+    Map<String, Object> event = new LinkedHashMap<>();
+    event.put("type", "chat-message");
+    event.put("id", stored.id);
+    event.put("senderUserId", stored.senderUserId);
+    event.put("senderName", stored.senderName);
+    event.put("senderRole", stored.senderRole);
+    event.put("content", stored.content);
+    event.put("deliveryStatus", stored.deliveryStatus);
+    event.put("createdAt", stored.createdAt.toString());
+    broadcast(consultationId, event, null);
+  }
+
+  private void markMessageRead(WebSocketSession session, JsonNode body) throws IOException {
+    long messageId = body.path("messageId").asLong(-1);
+    Long consultationId = (Long) session.getAttributes().get("consultationId");
+    Long readerId = (Long) session.getAttributes().get("userId");
+    var found = messages.findById(messageId);
+    if (found.isEmpty()) return;
+    ConsultationMessage stored = found.get();
+    if (!stored.consultationId.equals(consultationId) || stored.senderUserId.equals(readerId)) return;
+    stored.deliveryStatus = "READ";
+    stored.readAt = LocalDateTime.now();
+    messages.save(stored);
+    broadcast(consultationId, Map.of("type", "chat-read", "messageId", stored.id, "readAt", stored.readAt.toString()), null);
   }
 
   @Override

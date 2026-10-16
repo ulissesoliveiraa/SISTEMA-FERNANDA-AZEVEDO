@@ -41,7 +41,8 @@ Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 
 - Site responsivo com fotos oficiais preservadas e preço/campanhas via API.
 - Cadastro com consentimento versionado, login por perfil e recuperação neutra.
-- Checkout, pré-anamnese sem diagnóstico, MediaDevices, fila e sala demonstrativa.
+- Checkout, pré-anamnese sem diagnóstico, MediaDevices, fila e sala WebRTC.
+- Chat clínico em tempo real por WebSocket, persistido por consulta, com entrega e leitura.
 - Histórico, documentos marcados como demo, chats e upload com bloqueio de executáveis.
 - Chatbot operacional, tickets, notas internas e transcript mock.
 - Usuários, permissões, valores, campanhas, consentimentos e auditoria.

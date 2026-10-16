@@ -44,6 +44,7 @@ Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 - Checkout, pré-anamnese sem diagnóstico, MediaDevices, fila e sala WebRTC.
 - Chat clínico em tempo real por WebSocket, persistido por consulta, com entrega e leitura.
 - Anexos clínicos em armazenamento privado, download autorizado, magic bytes, hash SHA-256, quarentena e adaptador ClamAV.
+- Agenda médica persistente, presença online, reserva transacional, fila, atribuição exclusiva e estados de atendimento.
 - Histórico, documentos marcados como demo, chats e upload com bloqueio de executáveis.
 - Chatbot operacional, tickets, notas internas e transcript mock.
 - Usuários, permissões, valores, campanhas, consentimentos e auditoria.

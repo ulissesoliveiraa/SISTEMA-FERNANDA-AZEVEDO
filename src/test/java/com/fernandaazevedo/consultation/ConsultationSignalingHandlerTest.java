@@ -2,8 +2,8 @@ package com.fernandaazevedo.consultation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fernandaazevedo.attachments.AttachmentRepository;
+import com.fernandaazevedo.appointments.MedicalAppointment;
 import com.fernandaazevedo.domain.AppUser;
-import com.fernandaazevedo.domain.DomainRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -21,7 +21,7 @@ class ConsultationSignalingHandlerTest {
     ConsultationAccessService access = mock(ConsultationAccessService.class);
     ConsultationMessageRepository messageRepository = mock(ConsultationMessageRepository.class);
     AttachmentRepository attachmentRepository = mock(AttachmentRepository.class);
-    DomainRecord appointment = new DomainRecord(); appointment.id = 77L; appointment.reference = "FA-LIVE-TEST";
+    MedicalAppointment appointment = new MedicalAppointment(); appointment.id = 77L; appointment.reference = "FA-LIVE-TEST";
     AppUser patientUser = user(1L, "PATIENT");
     AppUser doctorUser = user(2L, "DOCTOR");
     when(access.authorize(77L, 1L)).thenReturn(Optional.of(new ConsultationAccessService.RoomAccess(appointment, patientUser, "PATIENT")));

@@ -29,5 +29,5 @@ public class AuthController {
     return ResponseEntity.ok(Map.of("message","Conta criada com sucesso."));
   }
   @PostMapping("/reset-password") public ResponseEntity<?> reset(@RequestBody Map<String,String>b){String p=b.getOrDefault("password","");if(!p.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"))return ResponseEntity.badRequest().body(Map.of("message","A senha não atende aos requisitos."));return d.users.findByEmailIgnoreCase(b.getOrDefault("email","" )).map(u->{u.passwordHash=d.encoder.encode(p);u.temporaryPassword=false;d.users.save(u);d.audit(u.email,"PASSWORD_RESET","USER",null,null);return ResponseEntity.ok(Map.of("message","Senha alterada com sucesso."));}).orElse(ResponseEntity.ok(Map.of("message","Senha alterada com sucesso.")));}
-  private Map<String,Object> view(AppUser u){return Map.of("id",u.id,"name",u.name,"email",u.email,"role",u.role,"status",u.status,"permissions",u.permissions,"temporaryPassword",u.temporaryPassword);}
+  private Map<String,Object> view(AppUser u){return Map.of("id",u.id,"name",u.name,"email",u.email,"role",u.role,"status",u.status,"permissions",u.permissions,"temporaryPassword",u.temporaryPassword,"online",u.online);}
 }

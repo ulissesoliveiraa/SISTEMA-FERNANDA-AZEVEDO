@@ -1,6 +1,7 @@
 package com.fernandaazevedo.consultation;
 
-import com.fernandaazevedo.domain.DomainRecordRepository;
+import com.fernandaazevedo.appointments.*;
+import com.fernandaazevedo.domain.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -10,6 +11,8 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -25,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class ConsultationAccessIntegrationTest {
   @Autowired MockMvc mvc;
-  @Autowired DomainRecordRepository records;
+  @Autowired MedicalAppointmentRepository appointments;
+  @Autowired AppUserRepository users;
 
   @Test
   void patientAndAssignedDoctorCanOpenLiveRoom() throws Exception {
@@ -54,8 +58,9 @@ class ConsultationAccessIntegrationTest {
   }
 
   @Test
+  @Transactional
   void completedConsultationCannotBeRejoined() throws Exception {
-    Long id = records.findByTypeAndReference("APPOINTMENT", "FA-CONS-2026-0042").orElseThrow().id;
+    MedicalAppointment completed = new MedicalAppointment(); completed.reference = "FA-COMPLETED-TEST"; completed.patientUserId = users.findByEmailIgnoreCase("paciente@fernandaazevedo.demo").orElseThrow().id; completed.status = "COMPLETED"; completed.priceAtPurchase = BigDecimal.TEN; completed.doctorPayoutAtPurchase = BigDecimal.ONE; Long id = appointments.save(completed).id;
     mvc.perform(get("/api/consultations/{id}/session", id).session(login("paciente@fernandaazevedo.demo")))
       .andExpect(status().isForbidden());
   }
@@ -76,7 +81,7 @@ class ConsultationAccessIntegrationTest {
   }
 
   private Long liveConsultationId() {
-    return records.findByTypeAndReference("APPOINTMENT", "FA-LIVE-DEMO").orElseThrow().id;
+    return appointments.findByReference("FA-LIVE-DEMO").orElseThrow().id;
   }
 
   private MockHttpSession login(String email) throws Exception {

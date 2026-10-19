@@ -13,6 +13,6 @@ public class AppUser {
   @Column(nullable=false) public String status="ACTIVE";
   @Column(length=4000) public String permissions="";
   public String phone; public String document; public boolean temporaryPassword;
-  public boolean online;
+  @Column(columnDefinition="boolean default false") public Boolean online=false;
   public LocalDateTime createdAt=LocalDateTime.now(); public LocalDateTime lastAccess;
 }

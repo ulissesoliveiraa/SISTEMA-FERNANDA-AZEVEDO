@@ -45,7 +45,7 @@ public class AppointmentService {
     if ("PATIENT".equals(user.role)) return appointments.findByPatientUserIdOrderByCreatedAtDesc(user.id);
     if ("DOCTOR".equals(user.role)) {
       List<MedicalAppointment> result = new ArrayList<>(appointments.findByDoctorUserIdOrderByCreatedAtDesc(user.id));
-      if (user.online) appointments.findByStatusOrderByQueueEnteredAtAsc("WAITING").stream().filter(item -> item.doctorUserId == null).forEach(result::add);
+      if (Boolean.TRUE.equals(user.online)) appointments.findByStatusOrderByQueueEnteredAtAsc("WAITING").stream().filter(item -> item.doctorUserId == null).forEach(result::add);
       return result;
     }
     if ("ADMIN".equals(user.role) || user.permissions.contains("appointments.view_operational")) return appointments.findAll();
@@ -65,7 +65,7 @@ public class AppointmentService {
   public MedicalAppointment enterQueue(Long id, AppUser patient) { MedicalAppointment appointment = ownedPatient(id, patient); requireStatus(appointment, "ANAMNESIS_COMPLETED"); appointment.status = "WAITING"; appointment.queueEnteredAt = LocalDateTime.now(); touch(appointment); return appointment; }
 
   @Transactional
-  public MedicalAppointment accept(Long id, AppUser doctor) { if (!"DOCTOR".equals(doctor.role) || !doctor.online) throw new RuleException("O médico precisa estar online para aceitar atendimentos."); if (appointments.existsByDoctorUserIdAndStatusIn(doctor.id, DOCTOR_BUSY)) throw new RuleException("Finalize ou devolva o atendimento atual antes de aceitar outro."); MedicalAppointment appointment = appointments.findLockedById(id).orElseThrow(() -> new RuleException("Consulta não encontrada.")); requireStatus(appointment, "WAITING"); if (appointment.doctorUserId != null) throw new RuleException("Esta consulta já foi atribuída."); appointment.doctorUserId = doctor.id; appointment.status = "READY"; appointment.acceptedAt = LocalDateTime.now(); touch(appointment); return appointment; }
+  public MedicalAppointment accept(Long id, AppUser doctor) { if (!"DOCTOR".equals(doctor.role) || !Boolean.TRUE.equals(doctor.online)) throw new RuleException("O médico precisa estar online para aceitar atendimentos."); if (appointments.existsByDoctorUserIdAndStatusIn(doctor.id, DOCTOR_BUSY)) throw new RuleException("Finalize ou devolva o atendimento atual antes de aceitar outro."); MedicalAppointment appointment = appointments.findLockedById(id).orElseThrow(() -> new RuleException("Consulta não encontrada.")); requireStatus(appointment, "WAITING"); if (appointment.doctorUserId != null) throw new RuleException("Esta consulta já foi atribuída."); appointment.doctorUserId = doctor.id; appointment.status = "READY"; appointment.acceptedAt = LocalDateTime.now(); touch(appointment); return appointment; }
 
   @Transactional
   public MedicalAppointment start(Long id, AppUser doctor) { MedicalAppointment appointment = assignedDoctor(id, doctor); requireStatus(appointment, "READY"); appointment.status = "IN_PROGRESS"; appointment.startedAt = LocalDateTime.now(); touch(appointment); return appointment; }

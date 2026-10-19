@@ -1,6 +1,6 @@
-# Fernanda Azevedo — protótipo de telemedicina
+# Fernanda Azevedo — plataforma de telemedicina
 
-Protótipo de alta fidelidade com site institucional, autenticação/RBAC, jornada do paciente, área médica, teleconsulta demonstrativa, chat clínico, suporte com chatbot e tickets, administração, consentimentos e auditoria.
+Aplicação Spring Boot com autenticação/RBAC, jornada do paciente, agenda médica, teleconsulta WebRTC, chat clínico, suporte com tickets, administração, consentimentos e auditoria.
 
 ## Executar
 
@@ -24,9 +24,9 @@ O servidor é vinculado exclusivamente a `127.0.0.1`, portanto não é publicado
 
 O repositório inclui `Dockerfile` e `render.yaml`. No Render, crie um **Blueprint**, conecte este repositório e confirme o serviço gratuito. O Render define a porta e publica a aplicação com HTTPS automaticamente.
 
-No plano gratuito, o sistema entra em repouso após um período sem acessos e o armazenamento local é efêmero. Portanto, o H2 e os uploads podem voltar aos dados demonstrativos após reinicializações. Use esta implantação somente para demonstração; produção requer banco e armazenamento persistentes.
+No plano gratuito, o sistema entra em repouso após um período sem acessos e o armazenamento local é efêmero. Para operação real, conecte banco PostgreSQL e armazenamento privado persistente.
 
-## Contas demo
+## Contas de desenvolvimento
 
 Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 
@@ -55,7 +55,7 @@ Todas usam `Demo@123` (armazenada apenas como hash BCrypt).
 - `src/main/resources/static`: HTML5, CSS e JavaScript modular.
 - `src/main/resources/static/assets`: fotos oficiais e SVG do chatbot.
 
-## Limitações
+## Dependências ainda não produtivas
 
 Pagamento, Google OAuth, antimalware, verificação de URLs, cloud, SMTP, assinatura e push são simulados. A videochamada WebRTC é real, não é gravada e ainda depende de TURN e validação entre redes distintas para uso confiável. O scanner mock **não oferece proteção antimalware real** e documentos demo não têm validade médica. Produção exige revisão jurídica/LGPD/CFM, SRES, infraestrutura, CSRF/CSP, storage privado, scanner real, OAuth, observabilidade e testes de segurança.
 
@@ -72,6 +72,8 @@ WEBRTC_TURN_CREDENTIAL=credencial-temporaria
 ```
 
 Sem TURN, a chamada pode funcionar na mesma rede ou em NATs compatíveis, mas não deve ser considerada pronta para produção. Credenciais TURN permanentes não devem ser versionadas; em produção, use credenciais temporárias emitidas por backend seguro.
+
+O teste `scripts/webrtc-e2e.cjs` abre paciente e médico em contextos isolados do Chromium e exige áudio e vídeo local/remoto nos dois participantes. Ele usa dispositivos sintéticos do navegador, portanto valida a aplicação e a negociação WebRTC, não o hardware físico do computador.
 
 ## Antimalware e armazenamento privado
 

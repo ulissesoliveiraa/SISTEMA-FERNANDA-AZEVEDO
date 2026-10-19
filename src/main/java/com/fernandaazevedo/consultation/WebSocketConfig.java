@@ -10,12 +10,15 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
   private final ConsultationSignalingHandler signalingHandler;
+  private final com.fernandaazevedo.support.SupportWebSocketHandler supportHandler;
 
-  public WebSocketConfig(ConsultationSignalingHandler signalingHandler) { this.signalingHandler = signalingHandler; }
+  public WebSocketConfig(ConsultationSignalingHandler signalingHandler, com.fernandaazevedo.support.SupportWebSocketHandler supportHandler) { this.signalingHandler = signalingHandler; this.supportHandler = supportHandler; }
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
     registry.addHandler(signalingHandler, "/ws/consultations/{consultationId}")
+      .addInterceptors(new HttpSessionHandshakeInterceptor());
+    registry.addHandler(supportHandler, "/ws/tickets/{ticketId}")
       .addInterceptors(new HttpSessionHandshakeInterceptor());
   }
 }

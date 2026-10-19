@@ -10,3 +10,5 @@ services:
         value: 0.0.0.0
       - key: JAVA_TOOL_OPTIONS
         value: -XX:MaxRAMPercentage=75.0
+      - key: SESSION_COOKIE_SECURE
+        value: "true"

@@ -1,7 +1,9 @@
 export async function api(path, options={}) {
-  const init={credentials:'same-origin',...options,headers:{...(options.body instanceof FormData?{}:{'Content-Type':'application/json'}),...(options.headers||{})}};
+  const method=(options.method||'GET').toUpperCase(), unsafe=!['GET','HEAD','OPTIONS'].includes(method), csrf=sessionStorage.getItem('fa-csrf');
+  const init={credentials:'same-origin',...options,headers:{...(options.body instanceof FormData?{}:{'Content-Type':'application/json'}),...(unsafe&&csrf?{'X-CSRF-Token':csrf}:{}),...(options.headers||{})}};
   const response=await fetch(path,init); const data=await response.json().catch(()=>({}));
   if(!response.ok) throw Object.assign(new Error(data.message||'Não foi possível concluir.'),{status:response.status,data});
+  if(data.csrfToken)sessionStorage.setItem('fa-csrf',data.csrfToken);
   return data;
 }
 export const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v||0));

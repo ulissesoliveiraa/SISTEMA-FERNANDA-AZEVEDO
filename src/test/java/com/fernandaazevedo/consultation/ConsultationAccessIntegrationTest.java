@@ -69,14 +69,16 @@ class ConsultationAccessIntegrationTest {
   void clinicalUploadIsAuthorizedValidatedAndQuarantinedWithoutScanner() throws Exception {
     Long id = liveConsultationId();
     MockMultipartFile pdf = new MockMultipartFile("files", "exame.pdf", "application/pdf", "%PDF-1.7\nconteudo".getBytes());
-    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(pdf).session(login("paciente@fernandaazevedo.demo")))
+    MockHttpSession patient = login("paciente@fernandaazevedo.demo");
+    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(pdf).session(patient).header("X-CSRF-Token", patient.getAttribute("csrfToken")))
       .andExpect(status().isAccepted())
       .andExpect(jsonPath("$[0].scanStatus").value("QUARANTINED"))
       .andExpect(jsonPath("$[0].downloadUrl").doesNotExist());
-    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(pdf).session(login("suporte@fernandaazevedo.demo")))
+    MockHttpSession support = login("suporte@fernandaazevedo.demo");
+    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(pdf).session(support).header("X-CSRF-Token", support.getAttribute("csrfToken")))
       .andExpect(status().isForbidden());
     MockMultipartFile executable = new MockMultipartFile("files", "programa.exe", "application/octet-stream", "MZ".getBytes());
-    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(executable).session(login("paciente@fernandaazevedo.demo")))
+    mvc.perform(multipart("/api/consultations/{id}/attachments", id).file(executable).session(patient).header("X-CSRF-Token", patient.getAttribute("csrfToken")))
       .andExpect(status().isBadRequest());
   }
 

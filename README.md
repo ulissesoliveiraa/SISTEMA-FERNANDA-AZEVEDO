@@ -22,9 +22,17 @@ O servidor é vinculado exclusivamente a `127.0.0.1`, portanto não é publicado
 
 ## Publicar no Render
 
-O repositório inclui `Dockerfile` e `render.yaml`. No Render, crie um **Blueprint**, conecte este repositório e confirme o serviço gratuito. O Render define a porta e publica a aplicação com HTTPS automaticamente.
+O repositório inclui `Dockerfile` e `render.yaml`. No Render, crie um **Blueprint**, conecte este repositório e confirme a criação do serviço web e do PostgreSQL. O Render define a porta e publica a aplicação com HTTPS automaticamente.
 
-No plano gratuito, o sistema entra em repouso após um período sem acessos e o armazenamento local é efêmero. Para operação real, conecte banco PostgreSQL e armazenamento privado persistente.
+Antes do primeiro deploy, informe no formulário do Blueprint:
+
+- `BOOTSTRAP_ADMIN_EMAIL`: e-mail do primeiro administrador;
+- `BOOTSTRAP_ADMIN_PASSWORD`: senha temporária forte, com ao menos 12 caracteres, letra maiúscula, minúscula, número e símbolo;
+- `WEBRTC_TURN_URL`, `WEBRTC_TURN_USERNAME` e `WEBRTC_TURN_CREDENTIAL`: credenciais do servidor TURN para chamadas entre redes diferentes.
+
+O perfil `production` desativa as contas e os dados demonstrativos. Na primeira inicialização de um banco vazio, somente o administrador informado acima é criado, com troca obrigatória de senha. O PostgreSQL do Blueprint mantém usuários, consultas, chats e tickets entre reinicializações.
+
+O Blueprint usa planos gratuitos por padrão para não gerar cobrança automática. Para operação real contínua, revise retenção, backups e disponibilidade do plano do PostgreSQL e contrate armazenamento privado persistente para os anexos.
 
 ## Contas de desenvolvimento
 

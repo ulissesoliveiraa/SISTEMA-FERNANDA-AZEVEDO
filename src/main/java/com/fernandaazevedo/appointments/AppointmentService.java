@@ -5,6 +5,7 @@ import com.fernandaazevedo.common.DemoService;
 import com.fernandaazevedo.domain.AppUser;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ public class AppointmentService {
   private final DoctorAvailabilityRepository slots;
   private final DemoService demo;
   private final ObjectMapper json;
+  @Value("${app.seed-demo:true}") private boolean seedDemo;
 
   public AppointmentService(MedicalAppointmentRepository appointments, DoctorAvailabilityRepository slots, DemoService demo, ObjectMapper json) {
     this.appointments = appointments; this.slots = slots; this.demo = demo; this.json = json;
@@ -26,6 +28,7 @@ public class AppointmentService {
   @PostConstruct
   @Transactional
   public void seed() {
+    if (!seedDemo) return;
     if (appointments.findByReference("FA-LIVE-DEMO").isPresent()) return;
     AppUser patient = demo.users.findByEmailIgnoreCase("paciente@fernandaazevedo.demo").orElseThrow();
     AppUser doctor = demo.users.findByEmailIgnoreCase("medico@fernandaazevedo.demo").orElseThrow();

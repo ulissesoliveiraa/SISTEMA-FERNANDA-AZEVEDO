@@ -43,6 +43,12 @@ class ConsultationSignalingHandlerTest {
     handler.handleTextMessage(patient.socket, new TextMessage("{\"type\":\"chat-message\",\"content\":\"Como você está?\"}"));
     verify(messageRepository).save(argThat(message -> message.consultationId.equals(77L) && message.senderUserId.equals(1L) && message.content.equals("Como você está?") && message.deliveryStatus.equals("DELIVERED")));
     assertTrue(doctor.messages.stream().anyMatch(m -> m.contains("\"type\":\"chat-message\"") && m.contains("Como você está?")));
+
+    handler.consultationEnded(77L, "PATIENT", java.time.LocalDateTime.parse("2026-10-23T14:00:00"));
+    assertTrue(patient.messages.stream().anyMatch(m -> m.contains("\"type\":\"consultation-ended\"") && m.contains("\"endedByRole\":\"PATIENT\"")));
+    assertTrue(doctor.messages.stream().anyMatch(m -> m.contains("\"type\":\"consultation-ended\"")));
+    verify(patient.socket).close(argThat(status -> status.getCode() == 4000));
+    verify(doctor.socket).close(argThat(status -> status.getCode() == 4000));
   }
 
   @Test

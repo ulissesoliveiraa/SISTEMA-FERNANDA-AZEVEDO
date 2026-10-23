@@ -22,6 +22,9 @@ public class MedicalAppointment {
   public LocalDateTime acceptedAt;
   public LocalDateTime startedAt;
   public LocalDateTime endedAt;
+  public Long endedByUserId;
+  public String endedByRole;
+  public String completionReason;
   @Column(nullable = false, precision = 10, scale = 2) public BigDecimal priceAtPurchase;
   @Column(nullable = false, precision = 10, scale = 2) public BigDecimal doctorPayoutAtPurchase;
   @Lob @Column(columnDefinition = "CLOB") public String preAnamnesis;

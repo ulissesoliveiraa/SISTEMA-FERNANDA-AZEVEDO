@@ -53,6 +53,24 @@ class AppointmentServiceIntegrationTest {
   }
 
   @Test
+  void patientCanFinishOwnActiveConsultationAndActorIsAudited() {
+    AppUser patient = demo.users.findByEmailIgnoreCase("paciente@fernandaazevedo.demo").orElseThrow();
+    AppUser doctor = newDoctor("medico-patient-finish@fernandaazevedo.demo");
+    MedicalAppointment appointment = waiting(patient);
+    service.accept(appointment.id, doctor);
+    service.start(appointment.id, doctor);
+
+    MedicalAppointment finished = service.finish(appointment.id, patient, "Paciente solicitou encerramento");
+
+    assertEquals("COMPLETED", finished.status);
+    assertEquals(patient.id, finished.endedByUserId);
+    assertEquals("PATIENT", finished.endedByRole);
+    assertEquals("Paciente solicitou encerramento", finished.completionReason);
+    assertNotNull(finished.endedAt);
+    assertThrows(AppointmentService.RuleException.class, () -> service.finish(appointment.id, doctor));
+  }
+
+  @Test
   void slotCannotBeDoubleBookedOrOverlap() {
     AppUser patient = demo.users.findByEmailIgnoreCase("paciente@fernandaazevedo.demo").orElseThrow();
     AppUser doctor = newDoctor("medico4@fernandaazevedo.demo");

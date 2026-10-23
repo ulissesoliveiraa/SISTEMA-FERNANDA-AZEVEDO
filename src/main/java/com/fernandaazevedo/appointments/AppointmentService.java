@@ -74,7 +74,24 @@ public class AppointmentService {
   public MedicalAppointment start(Long id, AppUser doctor) { MedicalAppointment appointment = assignedDoctor(id, doctor); requireStatus(appointment, "READY"); appointment.status = "IN_PROGRESS"; appointment.startedAt = LocalDateTime.now(); touch(appointment); return appointment; }
 
   @Transactional
-  public MedicalAppointment finish(Long id, AppUser doctor) { MedicalAppointment appointment = assignedDoctor(id, doctor); requireStatus(appointment, "IN_PROGRESS"); appointment.status = "COMPLETED"; appointment.endedAt = LocalDateTime.now(); touch(appointment); return appointment; }
+  public MedicalAppointment finish(Long id, AppUser actor) { return finish(id, actor, null); }
+
+  @Transactional
+  public MedicalAppointment finish(Long id, AppUser actor, String reason) {
+    MedicalAppointment appointment = appointments.findLockedById(id).orElseThrow(() -> new RuleException("Consulta não encontrada."));
+    requireStatus(appointment, "IN_PROGRESS");
+    boolean patient = "PATIENT".equals(actor.role) && actor.id.equals(appointment.patientUserId);
+    boolean doctor = "DOCTOR".equals(actor.role) && actor.id.equals(appointment.doctorUserId);
+    if (!patient && !doctor) throw new RuleException("Apenas os participantes desta consulta podem finalizá-la.");
+    appointment.status = "COMPLETED";
+    appointment.endedAt = LocalDateTime.now();
+    appointment.endedByUserId = actor.id;
+    appointment.endedByRole = actor.role;
+    appointment.completionReason = normalizeReason(reason);
+    touch(appointment);
+    demo.audit(actor.email, "CONSULTATION_FINISHED", appointment.reference, "IN_PROGRESS", actor.role);
+    return appointment;
+  }
 
   @Transactional
   public AppUser presence(AppUser doctor, boolean online) { if (!"DOCTOR".equals(doctor.role)) throw new RuleException("Apenas médicos podem alterar disponibilidade operacional."); if (!online && appointments.existsByDoctorUserIdAndStatusIn(doctor.id, DOCTOR_BUSY)) throw new RuleException("Não é possível ficar offline durante um atendimento ativo."); doctor.online = online; return demo.users.save(doctor); }
@@ -92,6 +109,7 @@ public class AppointmentService {
 
   private MedicalAppointment base(Long patientId) { Map<String, Object> settings = demo.payload(demo.records.findByTypeOrderByCreatedAtDesc("SETTING").getFirst()); MedicalAppointment appointment = new MedicalAppointment(); appointment.reference = "FA-CONS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT); appointment.patientUserId = patientId; appointment.priceAtPurchase = decimal(settings.get("consultationPrice")); appointment.doctorPayoutAtPurchase = decimal(settings.get("doctorBasePayout")); return appointment; }
   private BigDecimal decimal(Object value) { return new BigDecimal(String.valueOf(value)); }
+  private String normalizeReason(String value) { if (value == null || value.isBlank()) return "PARTICIPANT_ENDED"; String clean = value.strip().replaceAll("[\\r\\n\\t]", " "); return clean.substring(0, Math.min(clean.length(), 240)); }
   private MedicalAppointment ownedPatient(Long id, AppUser patient) { MedicalAppointment appointment = appointments.findById(id).orElseThrow(() -> new RuleException("Consulta não encontrada.")); if (!"PATIENT".equals(patient.role) || !appointment.patientUserId.equals(patient.id)) throw new RuleException("Acesso não autorizado à consulta."); return appointment; }
   private MedicalAppointment assignedDoctor(Long id, AppUser doctor) { MedicalAppointment appointment = appointments.findLockedById(id).orElseThrow(() -> new RuleException("Consulta não encontrada.")); if (!"DOCTOR".equals(doctor.role) || !doctor.id.equals(appointment.doctorUserId)) throw new RuleException("Acesso não autorizado à consulta."); return appointment; }
   private void requireStatus(MedicalAppointment appointment, String expected) { if (!expected.equals(appointment.status)) throw new RuleException("A consulta não está no estado esperado: " + expected + "."); }

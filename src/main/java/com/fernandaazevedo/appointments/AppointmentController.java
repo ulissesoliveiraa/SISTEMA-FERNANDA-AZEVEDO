@@ -1,6 +1,7 @@
 package com.fernandaazevedo.appointments;
 
 import com.fernandaazevedo.common.DemoService;
+import com.fernandaazevedo.consultation.ConsultationSignalingHandler;
 import com.fernandaazevedo.domain.AppUser;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.*;
@@ -14,8 +15,9 @@ import java.util.*;
 public class AppointmentController {
   private final AppointmentService service;
   private final DemoService demo;
+  private final ConsultationSignalingHandler signaling;
 
-  public AppointmentController(AppointmentService service, DemoService demo) { this.service = service; this.demo = demo; }
+  public AppointmentController(AppointmentService service, DemoService demo, ConsultationSignalingHandler signaling) { this.service = service; this.demo = demo; this.signaling = signaling; }
 
   @GetMapping public ResponseEntity<?> list(HttpSession session) { AppUser user = user(session); return user == null ? unauthorized() : ResponseEntity.ok(service.visibleTo(user).stream().map(this::view).toList()); }
   @PostMapping("/checkout") public ResponseEntity<?> checkout(HttpSession session) { AppUser user = user(session); if (user == null) return unauthorized(); if (!"PATIENT".equals(user.role)) return forbidden(); return ResponseEntity.status(201).body(view(service.checkout(user))); }
@@ -24,7 +26,13 @@ public class AppointmentController {
   @PostMapping("/{id}/queue") public ResponseEntity<?> queue(@PathVariable Long id, HttpSession session) { return withUser(session, user -> view(service.enterQueue(id, user))); }
   @PostMapping("/{id}/accept") public ResponseEntity<?> accept(@PathVariable Long id, HttpSession session) { return withUser(session, user -> view(service.accept(id, user))); }
   @PostMapping("/{id}/start") public ResponseEntity<?> start(@PathVariable Long id, HttpSession session) { return withUser(session, user -> view(service.start(id, user))); }
-  @PostMapping("/{id}/finish") public ResponseEntity<?> finish(@PathVariable Long id, HttpSession session) { return withUser(session, user -> view(service.finish(id, user))); }
+  @PostMapping("/{id}/finish") public ResponseEntity<?> finish(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body, HttpSession session) {
+    return withUser(session, user -> {
+      MedicalAppointment appointment = service.finish(id, user, body == null ? null : String.valueOf(body.getOrDefault("reason", "")));
+      signaling.consultationEnded(appointment.id, appointment.endedByRole, appointment.endedAt);
+      return view(appointment);
+    });
+  }
 
   @PutMapping("/doctor/presence")
   public ResponseEntity<?> presence(@RequestBody Map<String, Object> body, HttpSession session) {
@@ -57,6 +65,7 @@ public class AppointmentController {
     result.put("doctorUserId", appointment.doctorUserId); result.put("doctor", name(appointment.doctorUserId));
     result.put("scheduledStart", appointment.scheduledStart); result.put("scheduledEnd", appointment.scheduledEnd);
     result.put("queueEnteredAt", appointment.queueEnteredAt); result.put("acceptedAt", appointment.acceptedAt); result.put("startedAt", appointment.startedAt); result.put("endedAt", appointment.endedAt);
+    result.put("endedByUserId", appointment.endedByUserId); result.put("endedByRole", appointment.endedByRole); result.put("completionReason", appointment.completionReason);
     result.put("priceAtPurchase", appointment.priceAtPurchase); result.put("doctorPayoutAtPurchase", appointment.doctorPayoutAtPurchase);
     result.put("preAnamnesis", appointment.preAnamnesis); result.put("anamnesisVersion", appointment.anamnesisVersion); result.put("createdAt", appointment.createdAt);
     return result;

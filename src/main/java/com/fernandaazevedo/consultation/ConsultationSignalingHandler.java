@@ -169,6 +169,26 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     if (session.isOpen()) session.close(CloseStatus.SERVER_ERROR);
   }
 
+  public void consultationEnded(Long consultationId, String endedByRole, LocalDateTime endedAt) {
+    Map<String, WebSocketSession> room = rooms.remove(consultationId);
+    if (room == null) return;
+    Map<String, Object> event = Map.of(
+      "type", "consultation-ended",
+      "endedByRole", endedByRole,
+      "endedAt", endedAt.toString()
+    );
+    for (WebSocketSession participant : room.values()) {
+      try {
+        synchronized (participant) {
+          if (participant.isOpen()) {
+            participant.sendMessage(new TextMessage(json.writeValueAsString(event)));
+            participant.close(new CloseStatus(4000, "Consulta finalizada"));
+          }
+        }
+      } catch (IOException ignored) {}
+    }
+  }
+
   private Long consultationId(WebSocketSession session) {
     try {
       String path = session.getUri().getPath();
@@ -181,11 +201,11 @@ public class ConsultationSignalingHandler extends TextWebSocketHandler {
     if (room == null) return;
     TextMessage message = new TextMessage(json.writeValueAsString(payload));
     for (WebSocketSession participant : room.values()) {
-      if (participant != excluded && participant.isOpen()) participant.sendMessage(message);
+      if (participant != excluded && participant.isOpen()) synchronized (participant) { participant.sendMessage(message); }
     }
   }
 
   private void send(WebSocketSession session, Map<String, ?> payload) throws IOException {
-    if (session.isOpen()) session.sendMessage(new TextMessage(json.writeValueAsString(payload)));
+    if (session.isOpen()) synchronized (session) { session.sendMessage(new TextMessage(json.writeValueAsString(payload))); }
   }
 }

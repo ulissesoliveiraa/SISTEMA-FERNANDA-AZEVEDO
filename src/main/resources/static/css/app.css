@@ -142,3 +142,24 @@ html,body{overflow-x:hidden;overflow-x:clip}
 html.dark body.public .hero h1{background:linear-gradient(115deg,#f4f0e5,#d8c38d 72%);-webkit-background-clip:text;background-clip:text;color:transparent}
 html.dark body.public .section h2,html.dark body.public .value-grid h3,html.dark body.public .feature-grid h3{color:#f1f5f1!important}
 html.dark body.public .hero-copy>p,html.dark body.public .section>p,html.dark body.public .value-grid p,html.dark body.public .feature-grid p{color:#c8d2ca}
+
+/* Hero editorial: a fotografia passa a compor o ambiente, sem parecer um card. */
+body.public .hero{max-width:none;min-height:720px;padding-left:max(calc((100vw - 1176px)/2),32px);padding-right:max(calc((100vw - 1176px)/2),32px);position:relative;isolation:isolate;overflow:hidden;grid-template-columns:minmax(0,1fr) minmax(360px,.82fr)}
+body.public .hero-copy{position:relative;z-index:3;max-width:650px;padding:36px 0}
+body.public .brand-photo--hero{position:absolute;z-index:0;inset:0 0 0 34%;width:auto;height:100%;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;transform:none;animation:none;opacity:.88;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.18) 13%,#000 42%,#000 100%);mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.18) 13%,#000 42%,#000 100%)}
+body.public .brand-photo--hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(251,250,248,.95) 0%,rgba(251,250,248,.54) 20%,transparent 58%),linear-gradient(0deg,rgba(49,76,54,.13),transparent 45%);pointer-events:none}
+body.public .brand-photo--hero img{width:100%;height:100%;object-fit:cover;object-position:62% 46%;transform:scale(1.025);filter:saturate(.88) contrast(.96);transition:transform 1.2s cubic-bezier(.2,.8,.2,1),filter .5s ease}
+body.public .hero:hover .brand-photo--hero img{transform:scale(1.055);filter:saturate(.98) contrast(1)}
+body.public .hero-copy:after{content:"";position:absolute;z-index:-1;inset:4% -12% 2% -10%;background:radial-gradient(ellipse at 42% 50%,rgba(255,255,255,.8),rgba(255,255,255,.36) 48%,transparent 73%);filter:blur(12px);pointer-events:none}
+body.public .price-card{max-width:560px;width:100%;background:rgba(255,255,255,.7);backdrop-filter:blur(18px);border:1px solid rgba(185,147,69,.2);border-left:4px solid var(--gold)}
+html.dark body.public .brand-photo--hero{opacity:.72}
+html.dark body.public .brand-photo--hero:after{background:linear-gradient(90deg,rgba(15,24,18,1) 0%,rgba(15,24,18,.74) 23%,rgba(15,24,18,.12) 67%),linear-gradient(0deg,rgba(8,18,11,.55),rgba(49,76,54,.08) 58%)}
+html.dark body.public .brand-photo--hero img{filter:saturate(.72) contrast(.92) brightness(.82)}
+html.dark body.public .hero:hover .brand-photo--hero img{filter:saturate(.84) contrast(.96) brightness(.86)}
+html.dark body.public .hero-copy:after{background:radial-gradient(ellipse at 40% 50%,rgba(12,24,16,.84),rgba(12,24,16,.45) 50%,transparent 74%)}
+html.dark body.public .price-card{background:rgba(25,40,29,.72);border-color:rgba(216,195,141,.2);border-left-color:var(--gold)}
+
+@media(max-width:980px){body.public .hero{display:block;min-height:720px;padding:64px max(7vw,24px)}body.public .hero-copy{max-width:680px}body.public .brand-photo--hero{inset:0;opacity:.28;-webkit-mask-image:none;mask-image:none}body.public .brand-photo--hero:after{background:linear-gradient(90deg,rgba(251,250,248,.97),rgba(251,250,248,.82) 58%,rgba(251,250,248,.48)),linear-gradient(0deg,rgba(251,250,248,.78),transparent 40%,rgba(251,250,248,.35))}html.dark body.public .brand-photo--hero{opacity:.35}html.dark body.public .brand-photo--hero:after{background:linear-gradient(90deg,rgba(15,24,18,.98),rgba(15,24,18,.86) 58%,rgba(15,24,18,.54)),linear-gradient(0deg,rgba(15,24,18,.86),transparent 40%,rgba(15,24,18,.38))}}
+@media(max-width:650px){body.public .hero{min-height:700px;padding:50px 20px 56px}body.public .hero-copy{padding:12px 0}body.public .hero-copy:after{inset:-3% -14% -1%;filter:blur(18px)}body.public .brand-photo--hero img{object-position:59% center}body.public .price-card{backdrop-filter:blur(14px)}}
+@media(prefers-reduced-motion:reduce){body.public .hero:hover .brand-photo--hero img{transform:scale(1.025)}}
+html.reduce-motion body.public .hero:hover .brand-photo--hero img{transform:scale(1.025)}

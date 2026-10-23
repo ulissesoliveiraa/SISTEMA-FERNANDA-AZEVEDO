@@ -14,16 +14,18 @@ import java.util.*;
 public class PrivateAttachmentService {
   private static final Set<String> ALLOWED = Set.of("pdf", "png", "jpg", "jpeg", "webp", "txt", "doc", "docx", "wav", "mp3", "m4a");
   private static final Set<String> AUDIO = Set.of("wav", "mp3", "m4a");
-  private final Path root;
+  private final Path stagingRoot;
   private final AttachmentRepository repository;
   private final MalwareScanner malwareScanner;
+  private final AttachmentStorage storage;
 
-  public PrivateAttachmentService(@Value("${storage.private.root:./private-storage}") String root,
-      AttachmentRepository repository, MalwareScanner malwareScanner) throws IOException {
-    this.root = Paths.get(root).toAbsolutePath().normalize();
+  public PrivateAttachmentService(@Value("${storage.staging.root:${java.io.tmpdir}/fernanda-azevedo-scan}") String root,
+      AttachmentRepository repository, MalwareScanner malwareScanner, AttachmentStorage storage) throws IOException {
+    this.stagingRoot = Paths.get(root).toAbsolutePath().normalize();
     this.repository = repository;
     this.malwareScanner = malwareScanner;
-    Files.createDirectories(this.root);
+    this.storage = storage;
+    Files.createDirectories(this.stagingRoot);
   }
 
   public Attachment store(Long consultationId, Long uploaderUserId, MultipartFile file) throws IOException {
@@ -40,8 +42,8 @@ public class PrivateAttachmentService {
 
     String id = UUID.randomUUID().toString();
     String storageName = id + ".bin";
-    Path target = root.resolve(storageName).normalize();
-    if (!target.startsWith(root)) throw new InvalidAttachmentException("Nome de arquivo inválido.");
+    Path target = stagingRoot.resolve(storageName + ".upload").normalize();
+    if (!target.startsWith(stagingRoot)) throw new InvalidAttachmentException("Nome de arquivo inválido.");
     try (InputStream in = file.getInputStream()) { Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING); }
     try {
       Attachment attachment = new Attachment();
@@ -62,18 +64,19 @@ public class PrivateAttachmentService {
         case SCAN_FAILED, NOT_CONFIGURED -> "QUARANTINED";
       };
       attachment.scanDetail = scan.detail();
+      storage.put(storageName, target);
       return repository.save(attachment);
-    } catch (RuntimeException error) {
-      Files.deleteIfExists(target);
+    } catch (RuntimeException | IOException error) {
+      try { storage.delete(storageName); } catch (Exception ignored) {}
       throw error;
+    } finally {
+      Files.deleteIfExists(target);
     }
   }
 
-  public Path resolveClean(Attachment attachment) {
+  public InputStream openClean(Attachment attachment) throws IOException {
     if (!"CLEAN".equals(attachment.scanStatus)) throw new InvalidAttachmentException("Arquivo indisponível enquanto estiver em quarentena ou bloqueado.");
-    Path path = root.resolve(attachment.storageName).normalize();
-    if (!path.startsWith(root) || !Files.isRegularFile(path)) throw new InvalidAttachmentException("Arquivo não encontrado no armazenamento privado.");
-    return path;
+    return storage.open(attachment.storageName);
   }
 
   private String sanitize(String name) { String safe = name.replaceAll("[\\\\/\\r\\n\\t<>:\"|?*]", "_").strip(); return safe.isBlank() ? "arquivo" : safe.substring(0, Math.min(180, safe.length())); }

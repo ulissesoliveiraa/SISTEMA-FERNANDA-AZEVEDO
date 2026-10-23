@@ -29,10 +29,14 @@ Antes do primeiro deploy, informe no formulário do Blueprint:
 - `BOOTSTRAP_ADMIN_EMAIL`: e-mail do primeiro administrador;
 - `BOOTSTRAP_ADMIN_PASSWORD`: senha temporária forte, com ao menos 12 caracteres, letra maiúscula, minúscula, número e símbolo;
 - `WEBRTC_TURN_URL`, `WEBRTC_TURN_USERNAME` e `WEBRTC_TURN_CREDENTIAL`: credenciais do servidor TURN para chamadas entre redes diferentes.
+- `STORAGE_S3_BUCKET`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY` e `STORAGE_S3_SECRET_KEY`: bucket privado compatível com S3;
+- `STORAGE_S3_ENDPOINT`: endpoint HTTPS do provedor, necessário para serviços compatíveis como Cloudflare R2 e opcional no Amazon S3.
 
 O perfil `production` desativa as contas e os dados demonstrativos. Na primeira inicialização de um banco vazio, somente o administrador informado acima é criado, com troca obrigatória de senha. O PostgreSQL do Blueprint mantém usuários, consultas, chats e tickets entre reinicializações.
 
-O Blueprint usa planos gratuitos por padrão para não gerar cobrança automática. Para operação real contínua, revise retenção, backups e disponibilidade do plano do PostgreSQL e contrate armazenamento privado persistente para os anexos.
+O perfil de produção exige armazenamento privado compatível com S3. Os arquivos passam primeiro por uma área temporária de inspeção, são enviados ao bucket com nome interno aleatório e só podem ser baixados pela API depois do resultado `CLEAN`. O bucket não deve permitir acesso público.
+
+O Blueprint usa planos gratuitos por padrão para não gerar cobrança automática. Para operação real contínua, revise retenção, backups e disponibilidade do plano do PostgreSQL e do provedor de objetos.
 
 ## Contas de desenvolvimento
 

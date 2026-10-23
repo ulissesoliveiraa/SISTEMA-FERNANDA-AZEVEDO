@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 
 import java.util.*;
@@ -74,9 +74,11 @@ public class ConsultationController {
         .header("X-Content-Type-Options", "nosniff")
         .contentType(MediaType.APPLICATION_OCTET_STREAM)
         .contentLength(attachment.size)
-        .body(new FileSystemResource(attachmentService.resolveClean(attachment)));
+        .body(new InputStreamResource(attachmentService.openClean(attachment)));
     } catch (PrivateAttachmentService.InvalidAttachmentException error) {
       return ResponseEntity.status(423).body(Map.of("message", error.getMessage()));
+    } catch (java.io.IOException error) {
+      return ResponseEntity.internalServerError().body(Map.of("message", "Não foi possível recuperar o arquivo no armazenamento privado."));
     }
   }
 

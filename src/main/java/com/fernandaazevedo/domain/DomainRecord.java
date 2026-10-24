@@ -10,6 +10,6 @@ public class DomainRecord {
   @Column(nullable=false) public String owner;
   @Column(nullable=false) public String status;
   public String reference;
-  @Lob @Column(columnDefinition="CLOB") public String payload;
+  @Column(columnDefinition="TEXT") public String payload;
   public LocalDateTime createdAt=LocalDateTime.now(); public LocalDateTime updatedAt=LocalDateTime.now();
 }

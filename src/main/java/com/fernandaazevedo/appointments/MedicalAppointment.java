@@ -27,7 +27,7 @@ public class MedicalAppointment {
   public String completionReason;
   @Column(nullable = false, precision = 10, scale = 2) public BigDecimal priceAtPurchase;
   @Column(nullable = false, precision = 10, scale = 2) public BigDecimal doctorPayoutAtPurchase;
-  @Lob @Column(columnDefinition = "CLOB") public String preAnamnesis;
+  @Column(columnDefinition = "TEXT") public String preAnamnesis;
   public int anamnesisVersion;
   public String cancellationReason;
   @Column(nullable = false) public LocalDateTime createdAt = LocalDateTime.now();
